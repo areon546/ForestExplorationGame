@@ -1,0 +1,12 @@
+- broad
+- gathering is cool
+- more description of surroundings
+- procedural descriptions
+ - "Today is very " + x
+- colour?
+- Make time more distinct
+- Make more readable
+- Lost in forest - remember the path?
+- Town?
+- expand on herb gathering mechanic
+- fix save feature
