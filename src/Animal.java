@@ -1,4 +1,3 @@
-package Miniproject;
 
 public class Animal {
 
