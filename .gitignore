@@ -25,4 +25,3 @@ replay_pid*
 
 # Folders to ignore:
 .vscode/*
-bin/*
