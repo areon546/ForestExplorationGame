@@ -7,10 +7,16 @@ import java.io.PrintWriter;
 public class SaveFile {
     private static SaveFile singleton;
     private String path;
-    private String[] headings;
-    private String[] lines;
-    private int linesInFile;
+
+    private String[] headings, lines;
+    private Save[] saves;
+    private Save newSave, oldSave; // TODO fix the old save not being removed
+
     private boolean emtpy = false;
+    private int lineCount;
+
+    /************************/
+    // Constructors
 
     public static SaveFile createSaveFile(String path) throws IOException {
         if (singleton == null) {
@@ -22,19 +28,23 @@ public class SaveFile {
 
     private SaveFile(String path) throws IOException {
         this.path = path;
-        this.linesInFile = this.countLines();
-        if (this.linesInFile > 1) {
-            this.lines = new String[this.linesInFile - 1];
+        this.lineCount = this.countLines();
+        if (this.lineCount > 1) {
+            this.lines = new String[this.lineCount - 1];
+            this.saves = new Save[this.lineCount - 1];
             this.readFile(); // assigns headings and lines
+
+            /*
+             * convert lines into saves, is this necessary? i need to read ForestGame.java
+             * and decide how it should work
+             */
         } else {
             this.emtpy = true;
         }
-
-        // read through the save file and place it into the array headings and lines
-
-        // headings = line 1.split(,)
-        // lines = line 2 - n, if length >= 2
     }
+
+    /************************/
+    // Basic file IO
 
     // counts the number of lines in a given file
     //
@@ -57,7 +67,7 @@ public class SaveFile {
     //
     public void readFile() throws IOException {
         BufferedReader br = new BufferedReader(new FileReader(this.path));
-        int index = 0, fileLength = this.linesInFile;
+        int index = 0, fileLength = this.lineCount;
         String[] s = new String[fileLength];
         String fileInput = br.readLine();
 
@@ -79,8 +89,10 @@ public class SaveFile {
         this.headings = s[0].split(",");
 
         if (fileLength > 1) {
-            for (int i = 1; i < fileLength; i++) {
-                lines[i - 1] = s[i];
+            final int LEN = fileLength - 1;
+            for (int i = 0; i < LEN; i++) {
+                this.lines[i] = s[i + 1];
+                this.saves[i] = Save.csvToSave(this.lines[i]);
             }
         }
 
@@ -160,22 +172,6 @@ public class SaveFile {
         return;
     } // END writeFile
 
-    // creates a new array - i dont think i want this functionality but will keep
-    // this here if it turns out i need to do this
-    public void editFile() {
-
-    }
-
-    // appends a new save to the end
-    public void addToFile(Save newSave) {
-
-    }
-
-    // changes 1 line in the lines array with a new one
-    public void replaceLine(String oldString, String newString) {
-
-    }
-
     public String headingsToString() {
         String output = "";
         final int LEN = headings.length;
@@ -199,7 +195,88 @@ public class SaveFile {
             this.writeFile(this.lines[i], true);
         } // END for
 
+        if (this.newSave != null) {
+            this.writeFile(this.newSave.toCSV(), true);
+        }
+
         SaveFile.singleton = null;
+    }
+
+    public void saveCharacter(Save character) throws IOException {
+        for (int i = 0; i < saves.length; i++) {
+
+            // if character is in saves, replace them with character
+            if (saves[i].getName().equals(character.getName())) {
+                // replace and closeSaveFile
+                saves[i] = character;
+                lines[i] = character.toCSV();
+                this.closeSave();
+                return;
+            }
+        }
+
+        // else, add them as a new character and closeSaveFile
+        saveNewCharacter(character);
+    }
+
+    //
+    public void saveNewCharacter(Save newSave) throws IOException {
+        this.newSave = newSave;
+        this.closeSave();
+    } // END saveNewCharacter
+
+    public Save[] readSaves() {
+        return singleton.getSaves();
+    }
+
+    /************************/
+    // Getters
+    public String getPath() {
+        return path;
+    }
+
+    public int getLineCount() {
+        return lineCount;
+    }
+
+    public boolean isEmtpy() {
+        return emtpy;
+    }
+
+    public Save[] getSaves() {
+        return saves;
+    }
+
+    /*********************/
+    // is this necessary?
+
+    // converts an array of Save records to an array of their CSVs
+    //
+    public static String[] saveArrToCSVArr(Save[] s) { // TODO unnecessary
+        int arrLen = s.length;
+        String[] stringArr = new String[arrLen];
+
+        for (int i = 0; i < arrLen; i++) {
+            stringArr[i] = s[i].toCSV();
+        } // END for
+
+        return stringArr;
+    } // END saveArrToCSVArr
+
+    // creates a new array - i dont think i want this functionality but will keep
+    // this here if it turns out i need to do this
+    public void editFile() {
+
+    }
+
+    // appends a new save to the end
+    public void addToFile(Save newSave) {
+
+    }
+
+    // changes 1 line in the lines array with a new one
+    public void replaceLine(String oldString, String newString) {
+
     }
 
 }
